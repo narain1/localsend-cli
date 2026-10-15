@@ -1,8 +1,12 @@
 #include "my_application.h"
 
+#include <cstddef>
 #include <flutter_linux/flutter_linux.h>
 #ifdef GDK_WINDOWING_X11
 #include <gdk/gdkx.h>
+#endif
+#ifdef GDK_WINDOWING_WAYLAND
+#include <gdk/gdkwayland.h>
 #endif
 
 #include "flutter/generated_plugin_registrant.h"
@@ -17,11 +21,35 @@ struct _MyApplication {
 
 G_DEFINE_TYPE(MyApplication, my_application, GTK_TYPE_APPLICATION)
 
+static void platform_method_call_cb(FlMethodChannel* channel,
+                                    FlMethodCall* method_call,
+                                    gpointer user_data) {
+  g_autoptr(FlMethodResponse) response = nullptr;
+  if (strcmp(fl_method_call_get_name(method_call), "isWayland") == 0) {
+    response = FL_METHOD_RESPONSE(fl_method_success_response_new(
+        fl_value_new_bool(GPOINTER_TO_INT(user_data))));
+  } else {
+    response = FL_METHOD_RESPONSE(fl_method_not_implemented_response_new());
+  }
+  fl_method_call_respond(method_call, response, nullptr);
+}
+
 // Implements GApplication::activate.
 static void my_application_activate(GApplication* application) {
   MyApplication* self = MY_APPLICATION(application);
   GtkWindow* window =
       GTK_WINDOW(gtk_application_window_new(GTK_APPLICATION(application)));
+
+  // Check if --hidden is present in arguments
+  bool start_hidden = false;
+  if (self->dart_entrypoint_arguments != nullptr) {
+    for (int i = 0; self->dart_entrypoint_arguments[i] != nullptr; i++) {
+      if (strcmp(self->dart_entrypoint_arguments[i], "--hidden") == 0) {
+        start_hidden = true;
+        break;
+      }
+    }
+  }
 
   // If have GTK_CSD in env and it is equal to 1 then add the gtk header bar
   // to always use client side decorations
@@ -37,18 +65,41 @@ static void my_application_activate(GApplication* application) {
   }
 
   gtk_window_set_default_size(window, 400, 500);
-  gtk_widget_show(GTK_WIDGET(window));
+
+  if (!start_hidden) {
+    gtk_widget_show(GTK_WIDGET(window));
+  } else {
+    // Realize the window so plugins (like tray) can initialize, 
+    // but don't map it to the screen.
+    gtk_widget_realize(GTK_WIDGET(window));
+  }
 
   g_autoptr(FlDartProject) project = fl_dart_project_new();
   fl_dart_project_set_dart_entrypoint_arguments(project, self->dart_entrypoint_arguments);
 
   FlView* view = fl_view_new(project);
+
+  g_autoptr(FlStandardMethodCodec) codec = fl_standard_method_codec_new();
+  g_autoptr(FlMethodChannel) platform_channel = fl_method_channel_new(
+      fl_engine_get_binary_messenger(fl_view_get_engine(view)),
+      "org.localsend.localsend_app/platform", FL_METHOD_CODEC(codec));
+  bool is_wayland = false;
+#ifdef GDK_WINDOWING_WAYLAND
+  is_wayland = GDK_IS_WAYLAND_DISPLAY(
+      gtk_widget_get_display(GTK_WIDGET(window)));
+#endif
+  fl_method_channel_set_method_call_handler(
+      platform_channel, platform_method_call_cb, GINT_TO_POINTER(is_wayland),
+      nullptr);
+
   gtk_widget_show(GTK_WIDGET(view));
   gtk_container_add(GTK_CONTAINER(window), GTK_WIDGET(view));
 
   fl_register_plugins(FL_PLUGIN_REGISTRY(view));
 
-  gtk_widget_grab_focus(GTK_WIDGET(view));
+  if (!start_hidden) {
+    gtk_widget_grab_focus(GTK_WIDGET(view));
+  }
 }
 
 // Implements GApplication::local_command_line.

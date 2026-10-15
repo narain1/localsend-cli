@@ -19,34 +19,38 @@ class ShortcutWatcher extends StatelessWidget {
   Widget build(BuildContext context) {
     return Shortcuts(
       shortcuts: {
+        // LogicalKeySet requires an exact pressed-key match, which fails with Num Lock enabled on Linux.
+        // https://github.com/localsend/localsend/issues/3481
         // The select button on AndroidTV needs this to work
-        LogicalKeySet(LogicalKeyboardKey.select): const ActivateIntent(),
+        SingleActivator(LogicalKeyboardKey.select): const ActivateIntent(),
 
         // Add Control+Q binding for Linux
         // https://github.com/localsend/localsend/issues/194
-        if (checkPlatform([TargetPlatform.linux])) LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.keyQ): _ExitAppIntent(),
+        if (checkPlatform([TargetPlatform.linux])) SingleActivator(LogicalKeyboardKey.keyQ, control: true): _ExitAppIntent(),
         // Add Command+W to close the window for macOS
-        if (checkPlatform([TargetPlatform.macOS])) LogicalKeySet(LogicalKeyboardKey.meta, LogicalKeyboardKey.keyW): _CloseWindowIntent(),
+        if (checkPlatform([TargetPlatform.macOS])) SingleActivator(LogicalKeyboardKey.keyW, meta: true): _CloseWindowIntent(),
         // Add Control+, to open settings for macOS
-        if (checkPlatform([TargetPlatform.macOS])) LogicalKeySet(LogicalKeyboardKey.meta, LogicalKeyboardKey.comma): _OpenSettingsIntent(),
-        
-        LogicalKeySet(LogicalKeyboardKey.escape): _PopPageIntent(),
+        if (checkPlatform([TargetPlatform.macOS])) SingleActivator(LogicalKeyboardKey.comma, meta: true): _OpenSettingsIntent(),
+
+        SingleActivator(LogicalKeyboardKey.escape): _PopPageIntent(),
 
         // Control+V and Command+V
-        LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.keyV): _PasteIntent(),
-        LogicalKeySet(LogicalKeyboardKey.meta, LogicalKeyboardKey.keyV): _PasteIntent(),
+        SingleActivator(LogicalKeyboardKey.keyV, control: true): _PasteIntent(),
+        SingleActivator(LogicalKeyboardKey.keyV, meta: true): _PasteIntent(),
       },
       child: Actions(
         actions: {
           _ExitAppIntent: CallbackAction(onInvoke: (_) => exit(0)),
           _PopPageIntent: CallbackAction(onInvoke: (_) async => Navigator.of(Routerino.context).maybePop()),
-          _PasteIntent: CallbackAction(onInvoke: (_) async {
-            await context.global.dispatchAsync(PickFileAction(option: FilePickerOption.clipboard, context: context));
-            if (context.mounted) {
-              context.redux(homePageControllerProvider).dispatch(ChangeTabAction(HomeTab.send));
-            }
-            return null;
-          }),
+          _PasteIntent: CallbackAction(
+            onInvoke: (_) async {
+              await context.global.dispatchAsync(PickFileAction(option: FilePickerOption.clipboard, context: context));
+              if (context.mounted) {
+                context.redux(homePageControllerProvider).dispatch(ChangeTabAction(HomeTab.send));
+              }
+              return null;
+            },
+          ),
           _CloseWindowIntent: CallbackAction<_CloseWindowIntent>(
             onInvoke: (_) async {
               if (_isFakeMetaKey()) {
@@ -57,10 +61,12 @@ class ShortcutWatcher extends StatelessWidget {
               return null;
             },
           ),
-          _OpenSettingsIntent: CallbackAction(onInvoke: (_) async {
-            context.redux(homePageControllerProvider).dispatch(ChangeTabAction(HomeTab.settings));
-            return null;
-          }),
+          _OpenSettingsIntent: CallbackAction(
+            onInvoke: (_) async {
+              context.redux(homePageControllerProvider).dispatch(ChangeTabAction(HomeTab.settings));
+              return null;
+            },
+          ),
         },
         child: child,
       ),

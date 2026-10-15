@@ -7,6 +7,16 @@ import 'package:localsend_app/util/native/tray_helper.dart';
 
 const _methodChannel = MethodChannel('main-delegate-channel');
 
+Future<bool> restoreWindowFrame() async {
+  return await _methodChannel.invokeMethod<bool>('restoreWindowFrame') ?? false;
+}
+
+Future<void> configureWindowFrameAutosave({required bool enabled}) async {
+  await _methodChannel.invokeMethod('configureWindowFrameAutosave', {
+    'enabled': enabled,
+  });
+}
+
 Future<void> setupStatusBar() async {
   await _methodChannel.invokeMethod('setupStatusBar', {
     'open': t.tray.open,
@@ -52,6 +62,10 @@ Future<void> setDockIcon(TaskbarIcon icon) async {
 
 Future<bool> isReduceMotionEnabledMacOs() async {
   return await _methodChannel.invokeMethod('isReduceMotionEnabled') ?? false;
+}
+
+Future<void> openFirewallSettings() async {
+  await _methodChannel.invokeMethod('openFirewallSettings');
 }
 
 // This happens:

@@ -1,15 +1,3 @@
-<div align="center">
-  <sup>Special thanks to:</sup>
-  <br><br>
-  <a href="https://go.warp.dev/localsend" target="_blank">
-    <img alt="Warp sponsorship" width="300" src="https://raw.githubusercontent.com/warpdotdev/brand-assets/refs/heads/main/Github/Sponsor/Warp-Github-LG-03.png">
-    <br>
-    <b>Warp, built for coding with multiple AI Agents.</b>
-    <br>
-    <sup>Available for macOS, Linux and Windows</sup>
-  </a>
-</div>
-
 # LocalSend
 
 [![CI status][ci-badge]][ci-workflow]
@@ -25,7 +13,7 @@
 
 [Homepage][homepage] • [Discord][discord] • [GitHub][github] • [Codeberg][codeberg]
 
-[English (Default)](README.md) • [Español](readme_i18n/README_ES.md) • [فارسی](readme_i18n/README_FA.md) • [Filipino](readme_i18n/README_PH.md) • [Français](readme_i18n/README_FR.md) • [Indonesia](readme_i18n/README_ID.md) • [Italiano](readme_i18n/README_IT.md) • [日本語](readme_i18n/README_JA.md) • [ភាសាខ្មែរ](readme_i18n/README_KM.md) • [한국어](readme_i18n/README_KO.md) • [Polski](readme_i18n/README_PL.md) • [Portugês Brasil](readme_i18n/README_PT_BR.md) • [Русский](readme_i18n/README_RU.md) • [ภาษาไทย](readme_i18n/README_TH.md) • [Türkçe](readme_i18n/README_TR.md) • [Українська](readme_i18n/README_UK.md) • [Tiếng Việt](readme_i18n/README_VI.md) • [中文](readme_i18n/README_ZH.md)
+[English (Default)](README.md) • [中文](/support/readme/README_ZH.md)
 
 [homepage]: https://localsend.org
 [discord]: https://discord.gg/GSRWmQNP87
@@ -39,7 +27,9 @@ LocalSend is a free, open-source app that allows you to securely share files and
 - [Screenshots](#screenshots)
 - [Download](#download)
 - [How It Works](#how-it-works)
+- [Dependency Hierarchy](#dependency-hierarchy)
 - [Getting Started](#getting-started)
+- [Command Line Interface](#command-line-interface)
 - [Contributing](#contributing)
   - [Translation](#translation)
   - [Bug Fixes and Improvements](#bug-fixes-and-improvements)
@@ -57,10 +47,12 @@ LocalSend is a cross-platform app that enables secure communication between devi
 
 ## Sponsors
 
-Browser testing via
+This project is tested with BrowserStack
 
-<a href="https://www.lambdatest.com/" target="_blank">
-    <img src="https://www.lambdatest.com/blue-logo.png" style="vertical-align: middle;" width="250" height="45" />
+Supported by TestMu AI
+
+<a href="https://www.testmuai.com/?utm_medium=sponsor&utm_source=localsend" target="_blank">
+    <img src="https://localsend.org/img/sponsors/tesmu.svg" style="vertical-align: middle;" width="250" height="45" />
 </a>
 
 ## Screenshots
@@ -85,6 +77,11 @@ It is recommended to download the app either from an app store or from a package
 
 Read more about [distribution channels][].
 
+Windows binaries are signed. Read more about the [Code signing policy][].
+
+> [!CAUTION]
+> **Unofficial MSIX preview:** you can try builds from the latest commits at [localsend.ob-buff.dev](https://localsend.ob-buff.dev/). Stability is not guaranteed and all custom code tweaks are listed on that site.
+
 [windows store]: https://www.microsoft.com/store/apps/9NCB4Z0TZ6RR
 [app store]: https://apps.apple.com/us/app/localsend/id1661733229
 [play store]: https://play.google.com/store/apps/details?id=org.localsend.localsend_app
@@ -100,15 +97,16 @@ Read more about [distribution channels][].
 [aur]: https://aur.archlinux.org/packages/localsend-bin
 [latest]: https://github.com/localsend/localsend/releases/latest
 [distribution channels]: https://github.com/localsend/localsend/blob/main/CONTRIBUTING.md#distribution
+[code signing policy]: https://github.com/localsend/localsend/blob/main/CODE_SIGNING.md
 
 **Compatibility**
 
 | Platform | Minimum Version | Note                                                                                                                        |
 |----------|-----------------|-----------------------------------------------------------------------------------------------------------------------------|
-| Android  | 5.0             | -                                                                                                                           |
-| iOS      | 12.0            | -                                                                                                                           |
+| Android  | 7.0             | The last version to support Android 5 and 6 is v1.17.0.                                                                     |
+| iOS      | 13.0            | The last version to support iOS 12 is v1.17.0. Sharing from other apps requires iOS 14 or later.                               |
 | macOS    | 11 Big Sur      | Use OpenCore Legacy Patcher 2.0.2 (See [#1005](https://github.com/localsend/localsend/issues/1005#issuecomment-2449899384)) |
-| Windows  | 10              | The last version to support Windows 7 is v1.15.4. There might be backports of newer versions for Windows 7 in the future.   |
+| Windows  | 10              | The last version to support Windows 7 is v1.15.4.   |
 | Linux    | N.A.            | Deps: Gnome: `xdg-desktop-portal` and `xdg-desktop-portal-gtk`, KDE: `xdg-desktop-portal` and `xdg-desktop-portal-kde`      |
 
 ## Setup
@@ -119,6 +117,8 @@ In most cases, LocalSend should work out of the box. However, if you are having 
 |--------------|----------|-------|--------|
 | Incoming     | TCP, UDP | 53317 | Allow  |
 | Outgoing     | TCP, UDP | Any   | Allow  |
+
+On Linux, for example with `ufw`: `sudo ufw allow 53317`. With `firewalld`: `sudo firewall-cmd --permanent --add-port=53317/tcp`, `sudo firewall-cmd --permanent --add-port=53317/udp`, then `sudo firewall-cmd --reload`.
 
 Also make sure to disable AP isolation on your router. It should be usually disabled by default but some routers may have it enabled (especially guest networks).
 See [troubleshooting](#troubleshooting) for more information.
@@ -145,6 +145,10 @@ LocalSend uses a secure communication protocol that allows devices to communicat
 
 For more information on the LocalSend Protocol, see the [documentation](https://github.com/localsend/protocol).
 
+## Dependency Hierarchy
+
+![Dependency hierarchy](support/docs/dependency-hierarchy.svg)
+
 ## Getting Started
 
 To compile LocalSend from the source code, follow these steps:
@@ -161,6 +165,46 @@ To compile LocalSend from the source code, follow these steps:
 > and thus build issues may be caused by a mismatch between the required and the (system-wide) installed Flutter version.  
 > To make development more consistent, LocalSend uses [fvm](https://fvm.app) to manage the project Flutter version.
 > After installing `fvm`, run `fvm flutter` instead of `flutter`.
+
+## Command Line Interface
+
+The LocalSend CLI is a terminal client built on LocalSend Protocol v2.
+Run `localsend-cli --help` to see every available option and hotkey.
+
+Use the `send` command with one or more files, directories, or a mixture of both:
+
+```shell
+localsend-cli send report.pdf photo.jpg ./project-backup
+```
+
+The command opens the discovered-device list; select the destination interactively
+and press Enter to start the transfer.
+
+To select the destination without an interactive device list, pass its exact alias
+or IP address:
+
+```shell
+localsend-cli send --to "Cute Tomato" report.pdf
+localsend-cli send --to 192.168.27.26 report.pdf
+```
+
+An alias must uniquely identify a discovered device. An IP address is probed directly
+over HTTPS on LocalSend's default port (`53317`).
+
+To send a text message instead of files, use `--text` together with `--to`.
+Pass `-` to read the text from stdin:
+
+```shell
+localsend-cli send --to "Cute Tomato" --text "https://localsend.org"
+echo "Hello" | localsend-cli send --to "Cute Tomato" --text -
+```
+
+A single trailing line break is dropped from stdin. Text longer than 64 KB is sent as
+a `.txt` file instead. Stdin must be UTF-8 and at most 16 MB; send other data as a file.
+
+Directories are collected recursively. Their selected root names and nested paths
+are preserved on the receiver. Empty directories are not sent because LocalSend
+transfers file entries rather than directory entries.
 
 ## Contributing
 
@@ -194,12 +238,14 @@ For more information, see the [contributing guide](https://github.com/localsend/
 | Device not visible | Any                | Any                  | Make sure to disable AP-Isolation on your router. If it is enabled, connections between devices are forbidden.                          |
 | Device not visible | Any                | Windows              | Make sure to configure your network as a "private" network. Windows might be more restrictive when the network is configured as public. |
 | Device not visible | macOS, iOS         | Any                  | You can try to toggle the "Local Network" permission under "Privacy" in the OS settings.                                                |
+| Device not visible | Any                | Any                  | If a VPN is active, allow local/LAN traffic or temporarily disable the VPN. Some VPNs block local network connections by default.       |
+| Device not visible | Any                | Any                  | Use manual sending to enter the receiver's IP address directly. If that works, add the device to favorites so it is probed directly.    |
 | Speed too slow     | Any                | Any                  | Use 5 Ghz; Disable encryption on both devices                                                                                           |
 | Speed too slow     | Any                | Android              | Known issue. https://github.com/flutter-cavalry/saf_stream/issues/4                                                                     |
 
 ## Building
 
-These commands are intended for maintainers only.
+These commands are intended for maintainers only. Make sure to run them from the `app` directory.
 
 ### Android
 
